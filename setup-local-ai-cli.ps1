@@ -230,6 +230,8 @@ $binPathEntries = @(
     (Join-Path $binDir 'aider-local.ps1'),
     (Join-Path $binDir 'chat-local.cmd'),
     (Join-Path $binDir 'chat-local.ps1'),
+    (Join-Path $binDir 'config-loader.ps1'),
+    (Join-Path $binDir 'config.json'),
     (Join-Path $binDir 'setup-local-ai-cli.cmd'),
     (Join-Path $binDir 'setup-local-ai-cli.ps1')
 )
@@ -245,6 +247,8 @@ Copy-Item (Join-Path $repoRoot 'aider-local.ps1') -Destination (Join-Path $binDi
 Copy-Item (Join-Path $repoRoot 'aider-local.cmd') -Destination (Join-Path $binDir 'aider-local.cmd') -Force
 Copy-Item (Join-Path $repoRoot 'chat-local.ps1') -Destination (Join-Path $binDir 'chat-local.ps1') -Force
 Copy-Item (Join-Path $repoRoot 'chat-local.cmd') -Destination (Join-Path $binDir 'chat-local.cmd') -Force
+Copy-Item (Join-Path $repoRoot 'config-loader.ps1') -Destination (Join-Path $binDir 'config-loader.ps1') -Force
+Copy-Item (Join-Path $repoRoot 'config.json') -Destination (Join-Path $binDir 'config.json') -Force
 Copy-Item (Join-Path $repoRoot 'setup-local-ai-cli.ps1') -Destination (Join-Path $binDir 'setup-local-ai-cli.ps1') -Force
 Copy-Item (Join-Path $repoRoot 'setup-local-ai-cli.cmd') -Destination (Join-Path $binDir 'setup-local-ai-cli.cmd') -Force
 
