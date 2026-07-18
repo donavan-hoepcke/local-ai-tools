@@ -1,0 +1,9 @@
+{
+  "defaultCodingModel": "qwen2.5-coder:7b",
+  "defaultChatModel": "qwen2.5:7b",
+  "defaultReasoningModel": "qwen2.5:14b",
+  "embeddingModel": "nomic-embed-text",
+  "ollamaBaseUrl": "http://127.0.0.1:11434",
+  "defaultRepo": ".",
+  "useReasoningByDefault": false
+}
