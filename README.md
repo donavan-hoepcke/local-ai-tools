@@ -1,6 +1,7 @@
 # Local AI Tools
 
-This repository contains a small CLI-first local AI setup for Windows.
+This repository contains a small CLI-first local AI tooling setup for Windows.
+It is intentionally limited to scripts and launchers for local model runtime, coding assistance, and chat workflows.
 
 ## What it includes
 
