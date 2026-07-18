@@ -223,6 +223,36 @@ else {
 }
 "@ | Set-Content -Path $launchScript -Force
 
+$binDir = Join-Path $HOME 'bin'
+New-Item -ItemType Directory -Path $binDir -Force | Out-Null
+$binPathEntries = @(
+    (Join-Path $binDir 'aider-local.cmd'),
+    (Join-Path $binDir 'aider-local.ps1'),
+    (Join-Path $binDir 'chat-local.cmd'),
+    (Join-Path $binDir 'chat-local.ps1'),
+    (Join-Path $binDir 'setup-local-ai-cli.cmd'),
+    (Join-Path $binDir 'setup-local-ai-cli.ps1')
+)
+
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '.')).Path
+foreach ($entry in $binPathEntries) {
+    if (Test-Path $entry) {
+        Remove-Item $entry -Force
+    }
+}
+
+Copy-Item (Join-Path $repoRoot 'aider-local.ps1') -Destination (Join-Path $binDir 'aider-local.ps1') -Force
+Copy-Item (Join-Path $repoRoot 'aider-local.cmd') -Destination (Join-Path $binDir 'aider-local.cmd') -Force
+Copy-Item (Join-Path $repoRoot 'chat-local.ps1') -Destination (Join-Path $binDir 'chat-local.ps1') -Force
+Copy-Item (Join-Path $repoRoot 'chat-local.cmd') -Destination (Join-Path $binDir 'chat-local.cmd') -Force
+Copy-Item (Join-Path $repoRoot 'setup-local-ai-cli.ps1') -Destination (Join-Path $binDir 'setup-local-ai-cli.ps1') -Force
+Copy-Item (Join-Path $repoRoot 'setup-local-ai-cli.cmd') -Destination (Join-Path $binDir 'setup-local-ai-cli.cmd') -Force
+
+$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+if (-not ($userPath -split ';' | Where-Object { $_ -eq $binDir })) {
+    [Environment]::SetEnvironmentVariable('Path', ($userPath.TrimEnd(';') + ';' + $binDir), 'User')
+}
+
 $summaryPath = Join-Path $setupRoot 'summary.txt'
 @"
 CLI-first local AI setup summary

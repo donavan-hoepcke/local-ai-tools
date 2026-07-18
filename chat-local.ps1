@@ -4,8 +4,17 @@ param(
     [string]$ConfigPath = (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) 'config.json')
 )
 
-$config = & (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) 'config-loader.ps1') -ConfigPath $ConfigPath
+$repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+$config = & (Join-Path $repoRoot 'config-loader.ps1') -ConfigPath $ConfigPath
 if (-not $Model) { $Model = $config.DefaultChatModel }
+
+if (-not (Get-Command ollama -ErrorAction SilentlyContinue)) {
+    Write-Host 'Missing required tool: ollama' -ForegroundColor Yellow
+    Write-Host ''
+    Write-Host 'Please run the setup script from the repo root:' -ForegroundColor Cyan
+    Write-Host '  .\setup-local-ai-cli.ps1' -ForegroundColor Cyan
+    exit 1
+}
 
 $ollamaBase = $config.OllamaBaseUrl
 
