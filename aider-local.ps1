@@ -1,10 +1,16 @@
 param(
-    [string]$Model = 'qwen2.5-coder:7b',
+    [string]$Model,
     [string]$RepoPath = '.',
     [switch]$Reasoning,
     [switch]$GeneralChat,
-    [switch]$CurrentRepo
+    [switch]$CurrentRepo,
+    [string]$ConfigPath = (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) 'config.json')
 )
+
+$config = & (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) 'config-loader.ps1') -ConfigPath $ConfigPath
+if (-not $Model) {
+    if ($GeneralChat) { $Model = $config.DefaultChatModel } else { $Model = $config.DefaultCodingModel }
+}
 
 $repo = if ($CurrentRepo -or $RepoPath -eq '.') {
     if (Test-Path '.git') {
@@ -22,7 +28,7 @@ if ($GeneralChat) {
     $Model = 'qwen2.5:7b'
 }
 
-$ollamaBase = 'http://127.0.0.1:11434'
+$ollamaBase = $config.OllamaBaseUrl
 
 try {
     $response = Invoke-WebRequest -Uri "$ollamaBase/api/tags" -Method Get -TimeoutSec 5 -UseBasicParsing
@@ -51,7 +57,7 @@ $aiderArgs = @(
 )
 
 if ($Reasoning) {
-    $aiderArgs[1] = 'ollama/qwen2.5:14b'
+    $aiderArgs[1] = "ollama/$($config.DefaultReasoningModel)"
 }
 
 & aider @aiderArgs $repo

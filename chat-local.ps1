@@ -1,9 +1,13 @@
 param(
-    [string]$Model = 'qwen2.5:7b',
-    [string]$Prompt = 'Hello. Help me summarize my current work and suggest the next best step.'
+    [string]$Model,
+    [string]$Prompt = 'Hello. Help me summarize my current work and suggest the next best step.',
+    [string]$ConfigPath = (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) 'config.json')
 )
 
-$ollamaBase = 'http://127.0.0.1:11434'
+$config = & (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) 'config-loader.ps1') -ConfigPath $ConfigPath
+if (-not $Model) { $Model = $config.DefaultChatModel }
+
+$ollamaBase = $config.OllamaBaseUrl
 
 try {
     $response = Invoke-WebRequest -Uri "$ollamaBase/api/tags" -Method Get -TimeoutSec 5 -UseBasicParsing
