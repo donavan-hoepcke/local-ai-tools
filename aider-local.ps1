@@ -39,9 +39,19 @@ catch {
     exit 1
 }
 
+$aiderArgs = @(
+    '--model', "ollama/$Model",
+    '--set-env', "OLLAMA_HOST=$ollamaBase",
+    '--no-show-model-warnings',
+    '--yes-always',
+    '--no-gitignore',
+    '--no-auto-commits',
+    '--no-dirty-commits',
+    '--no-browser'
+)
+
 if ($Reasoning) {
-    & aider --model ollama/qwen2.5:14b --set-env OLLAMA_HOST=$ollamaBase $repo
+    $aiderArgs[1] = 'ollama/qwen2.5:14b'
 }
-else {
-    & aider --model "ollama/$Model" --set-env OLLAMA_HOST=$ollamaBase $repo
-}
+
+& aider @aiderArgs $repo
