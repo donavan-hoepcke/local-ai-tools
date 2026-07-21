@@ -37,6 +37,37 @@ function Ensure-PathContains {
     }
 }
 
+function Resolve-PythonRuntime {
+    if (Test-Command py) {
+        foreach ($candidate in @('3.12', '3.11', '3')) {
+            $versionArg = "-$candidate"
+            & py $versionArg -c "import sys; print(sys.executable)" 2>$null | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                return [pscustomobject]@{
+                    Command = 'py'
+                    Version = $candidate
+                }
+            }
+        }
+    }
+
+    if (Test-Command python3) {
+        return [pscustomobject]@{
+            Command = 'python3'
+            Version = ''
+        }
+    }
+
+    if (Test-Command python) {
+        return [pscustomobject]@{
+            Command = 'python'
+            Version = ''
+        }
+    }
+
+    return $null
+}
+
 function Install-WingetPackage {
     param(
         [string]$PackageId,
@@ -96,12 +127,10 @@ else {
     Write-Warn 'Python may need to be installed manually.'
 }
 
+$pythonRuntime = Resolve-PythonRuntime
 $pythonExe = $null
-if (Test-Command py) {
-    $pythonExe = 'py'
-}
-elseif (Test-Command python) {
-    $pythonExe = 'python'
+if ($pythonRuntime) {
+    $pythonExe = $pythonRuntime.Command
 }
 
 if ($pythonExe) {
@@ -170,21 +199,35 @@ if (-not $SkipModels -and (Test-Command ollama)) {
 if ($pythonExe) {
     Write-Step 'Installing Aider'
     try {
+        $pyArgs = @()
         if ($pythonExe -eq 'py') {
-            & py -3 -m pip install --user --upgrade pip setuptools wheel
-            & py -3 -m pip install --user --upgrade --no-build-isolation aider-chat
+            if ($pythonRuntime.Version) {
+                $pyArgs += "-$($pythonRuntime.Version)"
+            }
+            else {
+                $pyArgs += '-3'
+            }
+
+            & py @pyArgs -m pip install --user --upgrade pip setuptools wheel
+            if ($LASTEXITCODE -ne 0) { throw 'pip upgrade failed' }
+
+            & py @pyArgs -m pip install --user --upgrade --no-build-isolation aider-chat
+            if ($LASTEXITCODE -ne 0) { throw 'aider install failed' }
         }
         else {
-            & python -m pip install --user --upgrade pip setuptools wheel
-            & python -m pip install --user --upgrade --no-build-isolation aider-chat
+            & $pythonExe -m pip install --user --upgrade pip setuptools wheel
+            if ($LASTEXITCODE -ne 0) { throw 'pip upgrade failed' }
+
+            & $pythonExe -m pip install --user --upgrade --no-build-isolation aider-chat
+            if ($LASTEXITCODE -ne 0) { throw 'aider install failed' }
         }
 
         $scriptsPath = $null
         if ($pythonExe -eq 'py') {
-            $scriptsPath = (& py -3 -c "import sysconfig; print(sysconfig.get_path('scripts', scheme='nt_user'))")
+            $scriptsPath = (& py @pyArgs -c "import sysconfig; print(sysconfig.get_path('scripts', scheme='nt_user'))")
         }
         else {
-            $scriptsPath = (& python -c "import sysconfig; print(sysconfig.get_path('scripts', scheme='nt_user'))")
+            $scriptsPath = (& $pythonExe -c "import sysconfig; print(sysconfig.get_path('scripts', scheme='nt_user'))")
         }
         $scriptsPath = $scriptsPath.Trim()
         if ($scriptsPath) {
@@ -194,7 +237,7 @@ if ($pythonExe) {
         Write-Success 'Aider installed'
     }
     catch {
-        Write-Warn 'Aider could not be installed automatically. You can try: pip install --user --upgrade pip setuptools wheel and then pip install --user --upgrade --no-build-isolation aider-chat'
+        Write-Warn "Aider could not be installed automatically. $($_.Exception.Message)"
     }
 }
 
@@ -206,7 +249,7 @@ if (-not $SkipVSCode) {
 }
 
 $launchScript = Join-Path $setupRoot 'start-aider.ps1'
-@"
+@'
 param(
     [string]$Model = 'qwen2.5-coder:7b',
     [string]$RepoPath = '.',
@@ -221,7 +264,7 @@ if ($Reasoning) {
 else {
     & aider --model ollama/$Model --api-base http://127.0.0.1:11434 $repoArg
 }
-"@ | Set-Content -Path $launchScript -Force
+'@ | Set-Content -Path $launchScript -Force
 
 $binDir = Join-Path $HOME 'bin'
 New-Item -ItemType Directory -Path $binDir -Force | Out-Null
